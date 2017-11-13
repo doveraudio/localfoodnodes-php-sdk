@@ -218,7 +218,7 @@ class LocalFoodNodes
 
             // If success, store token in session
             if ($refreshedToken) {
-                $_SESSION[$this->sessionKey] = $token;
+                $_SESSION[$this->sessionKey] = $refreshedToken;
             }
 
             return $refreshedToken;
