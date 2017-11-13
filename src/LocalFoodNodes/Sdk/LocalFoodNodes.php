@@ -102,7 +102,6 @@ class LocalFoodNodes
 
         try {
             $response = $this->client->request($method, $this->buildUrl($url), $params);
-
             return (string) $response->getBody();
         } catch (RequestException $e) {
             // Try refresh token is response is 401
@@ -113,6 +112,7 @@ class LocalFoodNodes
                 // Retry action with refreshed token
                 try {
                     $response = $this->client->request($method, $this->buildUrl($url), $params);
+                    return (string) $response->getBody();
                 } catch (RequestException $e) {
                     // Unset token so a new one can be requested
                     unset($_SESSION[$this->sessionKey]);
@@ -171,25 +171,29 @@ class LocalFoodNodes
      */
     private function requestToken()
     {
-        $response = $this->client->post($this->apiUrl . '/oauth/token', [
-            'form_params' => [
-                'grant_type' => 'password',
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'username' => $this->username,
-                'password' => $this->password,
-                'scope' => '*',
-            ],
-        ]);
+        try {
+            $response = $this->client->post($this->apiUrl . '/oauth/token', [
+                'form_params' => [
+                    'grant_type' => 'password',
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'username' => $this->username,
+                    'password' => $this->password,
+                    'scope' => '*',
+                ],
+            ]);
 
-        $token = json_decode((string) $response->getBody(), true);
+            $token = json_decode((string) $response->getBody(), true);
 
-        // If success, store token in session
-        if ($token) {
-            $_SESSION[$this->sessionKey] = $token;
+            // If success, store token in session
+            if ($token) {
+                $_SESSION[$this->sessionKey] = $token;
+            }
+
+            return $token;
+        } catch (RequestException $e) {
+            return $e;
         }
-
-        return $token;
     }
 
     /**
@@ -199,23 +203,27 @@ class LocalFoodNodes
      */
     private function refreshToken($token)
     {
-        $response = $this->client->post($this->apiUrl . '/oauth/token', [
-            'form_params' => [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $token['refresh_token'],
-                'client_id' => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'scope' => '*',
-            ],
-        ]);
+        try {
+            $response = $this->client->post($this->apiUrl . '/oauth/token', [
+                'form_params' => [
+                    'grant_type' => 'refresh_token',
+                    'refresh_token' => $token['refresh_token'],
+                    'client_id' => $this->clientId,
+                    'client_secret' => $this->clientSecret,
+                    'scope' => '*',
+                ],
+            ]);
 
-        $token = json_decode((string) $response->getBody(), true);
+            $refreshedToken = json_decode((string) $response->getBody(), true);
 
-        // If success, store token in session
-        if ($token) {
-            $_SESSION[$this->sessionKey] = $token;
+            // If success, store token in session
+            if ($refreshedToken) {
+                $_SESSION[$this->sessionKey] = $token;
+            }
+
+            return $refreshedToken;
+        } catch (RequestException $e) {
+            return $e;
         }
-
-        return $token;
     }
 }
