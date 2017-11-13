@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace LocalFoodNodes\Sdk;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;

@@ -1,0 +1,25 @@
+{
+    "name": "localfoodnodes/localfoodnodes-php-sdk",
+    "type": "SDK",
+    "description": "Simple PHP SDK for Local Food Nodes API",
+    "keywords": ["sdk","api"],
+    "homepage": "https://github.com/localfoodnodes/localfoodnodes-php-sdk",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "David Ajnered",
+            "email": "david@localfoodnodes.org",
+            "homepage": "https://localfoodnodes.org",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "guzzlehttp/guzzle": "^6.0",
+    },
+    "autoload": {
+        "psr-0": {
+            "LocalFoodNodes\\Sdk" : "src"
+        }
+    }
+}
