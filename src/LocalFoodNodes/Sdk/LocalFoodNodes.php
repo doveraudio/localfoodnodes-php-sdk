@@ -7,7 +7,13 @@ use GuzzleHttp\Exception\RequestException;
 
 class LocalFoodNodes
 {
+    /**
+     * @var GuzzleHttp\Client
+     */
     private $client;
+
+    private $sessionKey = 'localfoodnodes_api_token';
+
     private $apiUrl;
     private $clientId;
     private $clientSecret;
@@ -108,6 +114,8 @@ class LocalFoodNodes
                 try {
                     $response = $this->client->request($method, $this->buildUrl($url), $params);
                 } catch (RequestException $e) {
+                    // Unset token so a new one can be requested
+                    unset($_SESSION[$this->sessionKey]);
                     return $e;
                 }
             }
@@ -149,8 +157,8 @@ class LocalFoodNodes
     {
         session_start();
 
-        if (isset($_SESSION['localfoodnodes_api_token'])) {
-            return $_SESSION['localfoodnodes_api_token'];
+        if (isset($_SESSION[$this->sessionKey])) {
+            return $_SESSION[$this->sessionKey];
         } else {
             return $this->requestToken();
         }
@@ -178,7 +186,7 @@ class LocalFoodNodes
 
         // If success, store token in session
         if ($token) {
-            $_SESSION['localfoodnodes_api_token'] = $token;
+            $_SESSION[$this->sessionKey] = $token;
         }
 
         return $token;
@@ -205,7 +213,7 @@ class LocalFoodNodes
 
         // If success, store token in session
         if ($token) {
-            $_SESSION['localfoodnodes_api_token'] = $token;
+            $_SESSION[$this->sessionKey] = $token;
         }
 
         return $token;
