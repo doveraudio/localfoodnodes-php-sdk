@@ -50,11 +50,12 @@ class LocalFoodNodes
      */
     public function get($url, $params)
     {
-        return $this->request('GET', $url, $params);
+        return $this->request('GET', $url, ['query' => $params]);
     }
 
     /**
      * Helper function to perform a POST request.
+     * Check header Content-Type for correct data format.
      *
      * @param string $url
      * @param array $params
@@ -62,11 +63,18 @@ class LocalFoodNodes
      */
     public function post($url, $params)
     {
+        if (isset($params['header']['Content-Type']) && $params['header']['Content-Type'] === 'multipart/form-data') {
+            $params = ['multipart' => $params];
+        } else {
+            $params = ['form_params' => $params];
+        }
+
         return $this->request('POST', $url, $params);
     }
 
     /**
      * Helper function to perform a PUT request.
+     * Check header Content-Type for correct data format.
      *
      * @param string $url
      * @param array $params
@@ -74,6 +82,12 @@ class LocalFoodNodes
      */
     public function put($url, $params)
     {
+        if (isset($params['header']['Content-Type']) && $params['header']['Content-Type'] === 'multipart/form-data') {
+            $params = ['multipart' => $params];
+        } else {
+            $params = ['form_params' => $params];
+        }
+
         return $this->request('PUT', $url, $params);
     }
 
@@ -86,7 +100,7 @@ class LocalFoodNodes
      */
     public function delete($url, $params)
     {
-        return $this->request('DELETE', $url, $params);
+        return $this->request('DELETE', $url, ['query' => $params]);
     }
 
     /**
@@ -99,24 +113,24 @@ class LocalFoodNodes
      */
     public function request($method, $url, $params = [])
     {
+        $token = null;
+
         try {
             $token = $this->getToken();
             $params = $this->setHeaders($params, $token);
-
             $response = $this->client->request($method, $this->buildUrl($url), $params);
             return (string) $response->getBody();
         } catch (ClientException $e) {
             if ($e->getResponse()->getStatusCode() === 401) {
                 try {
+                    // Retry with refreshed token
                     $refreshedToken = $this->refreshToken($token);
                     $data = $this->setHeaders($params, $refreshedToken);
-
                     $response = $this->client->request($method, $this->buildUrl($url), $params);
                     return (string) $response->getBody();
                 } catch (ClientException $e) {
-                    // Unset token so a new one can be requested
                     $this->unsetSession();
-                    return $e;
+                    return $e->getResponse();
                 }
             }
         }
@@ -128,14 +142,14 @@ class LocalFoodNodes
      * @param array $params
      * @param array $token
      */
-    private function setHeaders($data, $token)
+    private function setHeaders($params, $token)
     {
         return array_merge([
             'headers' => [
                 'Accept' => 'application/json',
                 'Authorization' => 'Bearer ' . $token['access_token'],
             ]
-        ], $data);
+        ], $params);
     }
 
     /**
