@@ -4,6 +4,7 @@ namespace LocalFoodNodes\Sdk;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Support\Facades\Session;
 
 class LocalFoodNodes
 {
@@ -31,9 +32,6 @@ class LocalFoodNodes
      */
     public function __construct($apiUrl, $clientId, $clientSecret, $username, $password)
     {
-        session_start();
-
-        $this->client = new Client();
         $this->apiUrl = $apiUrl;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
@@ -113,12 +111,15 @@ class LocalFoodNodes
      */
     public function request($method, $url, $params = [])
     {
-        $token = null;
+        if (!$this->client) {
+            $this->client = new Client();
+        }
 
         try {
             $token = $this->getToken();
             $params = $this->setHeaders($params, $token);
             $response = $this->client->request($method, $this->buildUrl($url), $params);
+
             return (string) $response->getBody();
         } catch (ClientException $e) {
             if ($e->getResponse()->getStatusCode() === 401) {
@@ -130,6 +131,7 @@ class LocalFoodNodes
                     return (string) $response->getBody();
                 } catch (ClientException $e) {
                     $this->unsetSession();
+
                     return $e->getResponse();
                 }
             }
@@ -228,7 +230,7 @@ class LocalFoodNodes
      */
     private function getSession()
     {
-        return isset($_SESSION[$this->sessionKey]) ? $_SESSION[$this->sessionKey] : null;
+        return Session::has($this->sessionKey) ? Session::get($this->sessionKey) : null;
     }
 
     /**
@@ -239,7 +241,7 @@ class LocalFoodNodes
      */
     private function setSession($token)
     {
-        $_SESSION[$this->sessionKey] = $token;
+        Session::put($this->sessionKey, $token);
 
         return $token;
     }
@@ -249,6 +251,6 @@ class LocalFoodNodes
      */
     private function unsetSession()
     {
-        unset($_SESSION[$this->sessionKey]);
+        Session::forget($this->sessionKey);
     }
 }
